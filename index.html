@@ -1,0 +1,216 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Fontaine</title>
+<meta charset="utf-8">
+</head>
+<body style="background-color:#73b5f2; text-align: center;">
+<h1>Controle de la fontaine</h1>
+<hr  width="50%" color="midnightblue" size="3">
+<h2>D&#233;marrer la fontaine</h2>
+<form>
+<input type="button" id="fontaine" name="fontaine" value="START" style="background-color:#2bff00;" onclick="sendCmd(this.name+'='+this.value)">
+</form> 
+<hr width="50%" color="midnightblue" size="3">
+<h2>D&#233;marrer pompe ou leds</h2>
+<form>
+pompe
+<input type="button" id="pompe" name="pompe" value="START" style="background-color:#2bff00;" onclick="sendCmd(this.name+'='+this.value)">
+</form>
+<form>
+leds
+<input type="button" id="leds" name="leds" value="START" style="background-color:#2bff00;" onclick="sendCmd(this.name+'='+this.value)">
+</form>
+<hr  width="50%" color="midnightblue" size="3">
+<h2>choisir couleur des leds</h2>
+<input type="color" id="colorPicker" name="color" onclick="onClickColor(false)" onblur="onClickColor(true)" value="#0000ff" onchange="clickColor(this.value);">
+
+<table  style="width:60%; margin-left:20%; margin-right:20%">
+	<tbody><tr>
+	<th>Red</th>
+	<th>Green</th>
+	<th>Blue</th>
+	</tr>
+	<tr>
+	<td  style="height:20px;background-color:red"></td>
+	<td  style="background-color:green"></td>
+	<td  style="background-color:blue"></td>
+	</tr>
+	<tr>
+	<td>
+	<input oninput="changeColor()" onchange="changedColor()" type="range" id="slideRed" name="slideRed" min="0" max="255">
+	</td>
+	<td>
+	<input oninput="changeColor()" onchange="changedColor()" type="range" id="slideGreen" name="slideGreen" min="0" max="255">
+	</td>
+	<td>
+	<input oninput="changeColor()" onchange="changedColor()" type="range" id="slideBlue" name="slideBlue" min="0" max="255">
+	</td>
+	</tr>
+	<tr>
+		<td>
+			<td id="colorPicture"  style="height:50px;background-color:blue"></td>
+		</td>
+	</tr>
+	</tbody></table>
+
+<script>
+
+
+	function changeColor(){
+		var inputRangeRed = document.getElementById("slideRed"); 
+		var inputRangeGreen = document.getElementById("slideGreen"); 
+		var inputRangeBlue = document.getElementById("slideBlue"); 
+		var c = "rgb("+inputRangeRed.value+", "+inputRangeGreen.value+","+ inputRangeBlue.value+")"; 
+		document.getElementById("colorPicture").style.backgroundColor = c;
+	}
+	function changedColor(){
+		var r = document.getElementById("slideRed").value; 
+		var g = document.getElementById("slideGreen").value; 
+		var b = document.getElementById("slideBlue").value; 
+		setNewColor(r,g,b);
+		sendColor(r,g,b);
+	}
+
+	function setNewColor(r,g,b){
+		var c = "rgb("+r+","+g+","+b+")"; 
+		document.getElementById("colorPicker").value = rgbToHex(parseInt(r),parseInt(g),parseInt(b));	
+		document.getElementById("slideRed").value = r;
+		document.getElementById("slideGreen").value = g;
+		document.getElementById("slideBlue").value = b;
+		document.getElementById("colorPicture").style.backgroundColor = c;
+	}
+	
+	function updateVal(pompe,leds){
+	
+		if(pompe){
+			document.getElementById("pompe").style.backgroundColor = "red";
+			document.getElementById("pompe").value = "STOP"
+		}
+		else{	
+			document.getElementById("pompe").style.backgroundColor = "#2bff00";
+			document.getElementById("pompe").value = "START"
+		}
+		if(leds){
+			document.getElementById("leds").style.backgroundColor = "red";
+			document.getElementById("leds").value = "STOP"
+		}
+		else{	
+			document.getElementById("leds").style.backgroundColor = "#2bff00";
+			document.getElementById("leds").value = "START"
+		}
+		if(leds && pompe){
+			document.getElementById("fontaine").style.backgroundColor = "red";
+			document.getElementById("fontaine").value = "STOP"
+		}
+		else{	
+			document.getElementById("fontaine").style.backgroundColor = "#2bff00";
+			document.getElementById("fontaine").value = "START"
+		}
+	}
+	
+	function updatePage(pompe,leds,r,g,b,p){
+
+		updateVal(pompe,leds)	
+		setNewColor(r,g,b);
+	}
+	
+	
+	function clickColor(val){
+	
+		var rgb = hexToRgb(val);
+		setNewColor(rgb.r,rgb.g,rgb.b);
+		sendColor(rgb.r,rgb.g,rgb.b);
+	}
+
+	function sendColor(r,g,b){
+
+		var url = window.location.href.split("?");
+		var xmlHttp = new XMLHttpRequest();
+		xmlHttp.open( "GET", url[0]+"?setColorRed="+r+"&setColorGreen="+g+"&setColorBlue="+b,true );
+		xmlHttp.send();
+		xmlHttp.onload = function () {
+			if (xmlHttp.readyState === xmlHttp.DONE) {
+				if (xmlHttp.status === 200) {
+					console.log(xmlHttp.response);
+				}
+			}
+		};
+
+	}
+	
+	function sendCmd(cmd){
+	
+		var url = window.location.href.split("?");
+		var xmlHttp = new XMLHttpRequest();
+		xmlHttp.open( "GET", url[0]+"?"+cmd,true );
+		xmlHttp.send();
+		xmlHttp.onload = function () {
+			if (xmlHttp.readyState === xmlHttp.DONE) {
+				if (xmlHttp.status === 200) {
+					console.log(xmlHttp.response);
+				}
+			}
+		};
+	
+	}
+	
+	var updateColor = true;
+	function onClickColor(v){
+		updateColor = v;
+		console.log("updateColor "+updateColor);
+	}
+	
+	function update(){
+	var url = window.location.href.split("?");
+		var xmlHttp = new XMLHttpRequest();
+		xmlHttp.open( "GET", url[0]+"?update",true );
+		xmlHttp.send();
+		xmlHttp.onload = function () {
+			if (xmlHttp.readyState === xmlHttp.DONE) {
+				if (xmlHttp.status === 200) {
+					var rep = xmlHttp.response
+					var para = rep.split(",");
+					var p1 = (para.shift() == "true");
+					var p2 = (para.shift() == "true");
+					if(!updateColor){
+						updateVal(p1,p2)
+					}else{
+						var p3 =  parseInt(para.shift() ); 
+						var p4 =  parseInt(para.shift() ); 
+						var p5 =  parseInt(para.shift() ); 
+						var p6 =  parseInt(para.shift() ); 
+						updatePage(p1,p2,p3,p4,p5,p6);
+					}
+					
+				}
+			}
+		};
+		setTimeout(update, 1000);
+	}
+	update();
+	
+	function componentToHex(c) {
+	  var hex = c.toString(16);
+	  return hex.length == 1 ? "0" + hex : hex;
+	}
+	
+	function rgbToHex(r, g, b) {
+	  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+	}
+	
+	function hexToRgb(hex) {
+		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	  return result ? {
+		r: parseInt(result[1], 16),
+		g: parseInt(result[2], 16),
+		b: parseInt(result[3], 16)
+	  } : null;
+	}
+
+</script>
+
+
+</body>
+</html>
